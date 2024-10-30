@@ -126,10 +126,10 @@ class StockInfo(BaseModel):
         net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
 
         # Format numbers with escaped special characters
-        open_price = escape_markdown(f"NT${self._parse_float(self.open_price):,.2f}")
-        high_price = escape_markdown(f"NT${self._parse_float(self.high_price):,.2f}")
-        low_price = escape_markdown(f"NT${self._parse_float(self.low_price):,.2f}")
-        last_price_str = escape_markdown(f"NT${last_price:,.2f}")
+        open_price = escape_markdown(f"{self._parse_float(self.open_price):,.2f}")
+        high_price = escape_markdown(f"{self._parse_float(self.high_price):,.2f}")
+        low_price = escape_markdown(f"{self._parse_float(self.low_price):,.2f}")
+        last_price_str = escape_markdown(f"{last_price:,.2f}")
         net_change_str = escape_markdown(f"{net_change:+.2f}%")
         volume = escape_markdown(f"{self._parse_int(self.accumulated_volume):,}")
 
