@@ -134,8 +134,7 @@ class StockInfo(BaseModel):
         volume = escape_markdown(f"{self._parse_int(self.accumulated_volume):,}")
 
         return (
-            f"*{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*\n\n"
-            f"💰 *Price Information*\n"
+            f"📊 *{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*\n"
             f"Open: `{open_price}`\n"
             f"High: `{high_price}`\n"
             f"Low: `{low_price}`\n"
@@ -180,8 +179,7 @@ class StockInfoResponse(BaseModel):
         formatted_time = escape_markdown(f"{formatted_date} {self.query_time.sys_time}")
 
         result = [
-            "*📊 Stock Market Information*\n",
-            f"_Query Time: {formatted_time}_\n",
+            f"⏰ {formatted_time}",
         ]
 
         for stock in self.msg_array:
