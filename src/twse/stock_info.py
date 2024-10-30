@@ -1,4 +1,9 @@
+"""Taiwan Stock Exchange (TWSE) real-time stock information API client."""
+
+from __future__ import annotations
+
 import time
+from typing import Any
 
 import httpx
 from pydantic import BaseModel
@@ -6,53 +11,115 @@ from pydantic import Field
 
 
 class StockInfo(BaseModel):
+    """Real-time stock information from TWSE."""
+
     exchange_id: str | None = Field(None, validation_alias="@")
-    tv: str | None = None
+    tv: str | None = None  # Trading volume
     ps: str | None = None
     pid: str | None = None
-    pz: str | None = None
+    pz: str | None = None  # Trade price
     bp: str | None = None
     fv: str | None = None
-    oa: str | None = None
-    ob: str | None = None
+    oa: str | None = None  # Best ask price
+    ob: str | None = None  # Best bid price
     m_percent: str | None = Field(None, validation_alias="m%")
     caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
-    a: str | None = None
-    b: str | None = None
-    c: str | None = None
+    a: str | None = None  # Ask prices array
+    b: str | None = None  # Bid prices array
+    c: str | None = None  # Stock symbol
     hash_id: str | None = Field(None, validation_alias="#")
-    d: str | None = None
+    d: str | None = None  # Trade date
     percent: str | None = Field(None, validation_alias="%")
-    ch: str | None = None
-    tlong: str | None = None
+    ch: str | None = None  # Stock ticker
+    tlong: str | None = None  # Timestamp
     ot: str | None = None
-    f: str | None = None
-    g: str | None = None
+    f: str | None = None  # Ask volumes array
+    g: str | None = None  # Bid volumes array
     ip: str | None = None
     mt: str | None = None
     ov: str | None = None
-    h: str | None = None
+    h: str | None = None  # High price
     i: str | None = None
     it: str | None = None
     oz: str | None = None
-    low_price: str | None = Field(None, validation_alias="l")
-    n: str | None = None
-    o: str | None = None
+    low_price: str | None = Field(None, validation_alias="l")  # Low price
+    n: str | None = None  # Stock name
+    o: str | None = None  # Open price
     p: str | None = None
-    ex: str | None = None
+    ex: str | None = None  # Exchange type
     s: str | None = None
-    t: str | None = None
-    u: str | None = None
-    v: str | None = None
-    w: str | None = None
-    nf: str | None = None
-    y: str | None = None
-    z: str | None = None
+    t: str | None = None  # Trade time
+    u: str | None = None  # Upper limit price
+    v: str | None = None  # Accumulated volume
+    w: str | None = None  # Lower limit price
+    nf: str | None = None  # Full company name
+    y: str | None = None  # Previous close price
+    z: str | None = None  # Last trade price
     ts: str | None = None
+
+    def _parse_float(self, value: str | None) -> float:
+        """Parse string to float, handling None and invalid values."""
+        if not value or value == "-":
+            return 0.0
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+
+    def _parse_int(self, value: str | None) -> int:
+        """Parse string to integer, handling None and invalid values."""
+        if not value or value == "-":
+            return 0
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return 0
+
+    def _get_mid_price(self) -> float:
+        """Calculate mid price from best ask and bid prices."""
+        if not self.a or not self.b:
+            return 0.0
+
+        try:
+            asks = self.a.split("_")
+            bids = self.b.split("_")
+            if not asks or not bids:
+                return 0.0
+            ask = self._parse_float(asks[0])
+            bid = self._parse_float(bids[0])
+            return (ask + bid) / 2.0
+        except (IndexError, ValueError):
+            return 0.0
+
+    def _get_last_price(self) -> float:
+        """Get last price from trade price or mid price."""
+        trade_price = self._parse_float(self.pz)
+        return trade_price if trade_price > 0 else self._get_mid_price()
+
+    def pretty_repr(self) -> str:
+        """Format stock information in a human-readable string."""
+        if not self.c:
+            return ""
+
+        last_price = self._get_last_price()
+        prev_close = self._parse_float(self.y)
+        net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
+
+        return (
+            f"{self.n}({self.c}), "
+            f"Open: {self._parse_float(self.o):.2f}, "
+            f"High: {self._parse_float(self.h):.2f}, "
+            f"Low: {self._parse_float(self.low_price):.2f}, "
+            f"Last: {last_price:.2f}, "
+            f"Net Change: {net_change:.2f}%, "
+            f"Volume: {self._parse_int(self.v)}"
+        )
 
 
 class QueryTime(BaseModel):
+    """Query time information from TWSE."""
+
     sys_date: str = Field(validation_alias="sysDate")
     stock_info_item: int = Field(validation_alias="stockInfoItem")
     stock_info: int = Field(validation_alias="stockInfo")
@@ -64,34 +131,58 @@ class QueryTime(BaseModel):
 
 
 class StockInfoResponse(BaseModel):
+    """Response from TWSE stock information API."""
+
     msg_array: list[StockInfo] = Field(validation_alias="msgArray")
-    referer: str
-    user_delay: int = Field(validation_alias="userDelay")
-    rtcode: str
+    referer: str | None = None
+    user_delay: int | None = Field(None, validation_alias="userDelay")
+    rtcode: str | None = None
     query_time: QueryTime = Field(validation_alias="queryTime")
-    rtmessage: str
-    ex_key: str = Field(validation_alias="exKey")
-    cached_alive: int = Field(validation_alias="cachedAlive")
+    rtmessage: str | None = None
+    ex_key: str | None = Field(None, validation_alias="exKey")
+    cached_alive: int | None = Field(None, validation_alias="cachedAlive")
+
+    def pretty_repr(self) -> str:
+        """Format response in a human-readable multi-line string."""
+        if not self.msg_array:
+            return "No stock information available"
+
+        result = [f"Query Time: {self.query_time.sys_date} {self.query_time.sys_time}", "Stock Information:"]
+
+        for stock in self.msg_array:
+            if stock_info := stock.pretty_repr():
+                result.append(f"  {stock_info}")
+
+        return "\n".join(result)
 
 
 def build_ex_ch(symbols: list[str]) -> str:
+    """Build exchange channel string for API request."""
     strings = []
-
     for symbol in symbols:
         if symbol.isdigit():
-            strings += [f"tse_{symbol}.tw"]
-            strings += [f"otc_{symbol}.tw"]
+            strings.extend([f"tse_{symbol}.tw", f"otc_{symbol}.tw"])
         else:
-            strings += [symbol]
-
+            strings.append(symbol)
     return "|".join(strings)
 
 
 def query_stock_info(symbols: str | list[str]) -> StockInfoResponse:
+    """Query real-time stock information from TWSE.
+
+    Args:
+        symbols: Stock symbol(s) to query. Can be a single symbol string or list of symbols.
+
+    Returns:
+        StockInfoResponse containing the queried stock information.
+
+    Raises:
+        httpx.HTTPError: If the API request fails.
+    """
     if isinstance(symbols, str):
         symbols = [symbols]
 
-    params = {
+    params: dict[str, Any] = {
         "ex_ch": build_ex_ch(symbols),
         "json": 1,
         "delay": 0,
@@ -99,7 +190,6 @@ def query_stock_info(symbols: str | list[str]) -> StockInfoResponse:
     }
 
     url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
-
     resp = httpx.get(url, params=params)
     resp.raise_for_status()
 
