@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from datetime import datetime
 from typing import Any
@@ -9,6 +10,22 @@ from typing import Any
 import httpx
 from pydantic import BaseModel
 from pydantic import Field
+
+
+def escape_markdown(text: str | None) -> str:
+    """Escape special characters for Telegram MarkdownV2 format.
+
+    Args:
+        text: Text to escape, can be None
+
+    Returns:
+        Escaped text string, or empty string if input is None
+    """
+    if text is None:
+        return ""
+
+    pattern = r"([_*\[\]()~`>#+=|{}.!-])"
+    return re.sub(pattern, r"\\\1", text)
 
 
 class StockInfo(BaseModel):
@@ -99,7 +116,7 @@ class StockInfo(BaseModel):
         return trade_price if trade_price > 0 else self._get_mid_price()
 
     def pretty_repr(self) -> str:
-        """Format stock information in markdown format."""
+        """Format stock information in Telegram MarkdownV2 format."""
         if not self.symbol:
             return ""
 
@@ -108,16 +125,23 @@ class StockInfo(BaseModel):
         net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
         net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
 
+        # Format numbers with escaped special characters
+        open_price = escape_markdown(f"NT${self._parse_float(self.open_price):,.2f}")
+        high_price = escape_markdown(f"NT${self._parse_float(self.high_price):,.2f}")
+        low_price = escape_markdown(f"NT${self._parse_float(self.low_price):,.2f}")
+        last_price_str = escape_markdown(f"NT${last_price:,.2f}")
+        net_change_str = escape_markdown(f"{net_change:+.2f}%")
+        volume = escape_markdown(f"{self._parse_int(self.accumulated_volume):,}")
+
         return (
-            f"## {self.name} ({self.symbol})\n\n"
-            "| Indicator | Value |\n"
-            "|-----------|-------|\n"
-            f"| Open | NT${self._parse_float(self.open_price):,.2f} |\n"
-            f"| High | NT${self._parse_float(self.high_price):,.2f} |\n"
-            f"| Low | NT${self._parse_float(self.low_price):,.2f} |\n"
-            f"| Last | NT${last_price:,.2f} |\n"
-            f"| Change | {net_change_symbol} {net_change:+.2f}% |\n"
-            f"| Volume | {self._parse_int(self.accumulated_volume):,} |\n"
+            f"*{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*\n\n"
+            f"💰 *Price Information*\n"
+            f"Open: `{open_price}`\n"
+            f"High: `{high_price}`\n"
+            f"Low: `{low_price}`\n"
+            f"Last: `{last_price_str}`\n"
+            f"Change: {net_change_symbol} `{net_change_str}`\n"
+            f"Volume: `{volume}`"
         )
 
 
@@ -147,23 +171,24 @@ class StockInfoResponse(BaseModel):
     cached_alive: int | None = Field(None, validation_alias="cachedAlive")
 
     def pretty_repr(self) -> str:
-        """Format response in markdown format."""
+        """Format response in Telegram MarkdownV2 format."""
         if not self.msg_array:
-            return "# No stock information available"
+            return "*No stock information available*"
 
         # Format date from YYYYMMDD to YYYY-MM-DD
         formatted_date = datetime.strptime(self.query_time.sys_date, "%Y%m%d").strftime("%Y-%m-%d")
+        formatted_time = escape_markdown(f"{formatted_date} {self.query_time.sys_time}")
 
         result = [
-            "# Stock Market Information\n",
-            f"*Query Time: {formatted_date} {self.query_time.sys_time}*\n",
+            "*📊 Stock Market Information*\n",
+            f"_Query Time: {formatted_time}_\n",
         ]
 
         for stock in self.msg_array:
             if stock_info := stock.pretty_repr():
                 result.append(stock_info)
 
-        return "\n".join(result)
+        return "\n\n".join(result)
 
 
 def build_ex_ch(symbols: list[str]) -> str:
