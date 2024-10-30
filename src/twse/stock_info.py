@@ -14,49 +14,49 @@ class StockInfo(BaseModel):
     """Real-time stock information from TWSE."""
 
     exchange_id: str | None = Field(None, validation_alias="@")
-    tv: str | None = None  # Trading volume
-    ps: str | None = None
-    pid: str | None = None
-    pz: str | None = None  # Trade price
-    bp: str | None = None
-    fv: str | None = None
-    oa: str | None = None  # Best ask price
-    ob: str | None = None  # Best bid price
-    m_percent: str | None = Field(None, validation_alias="m%")
+    trade_volume: str | None = Field(None, validation_alias="tv")
+    price_spread: str | None = Field(None, validation_alias="ps")
+    price_id: str | None = Field(None, validation_alias="pid")
+    trade_price: str | None = Field(None, validation_alias="pz")
+    best_price: str | None = Field(None, validation_alias="bp")
+    final_volume: str | None = Field(None, validation_alias="fv")
+    best_ask_price: str | None = Field(None, validation_alias="oa")
+    best_bid_price: str | None = Field(None, validation_alias="ob")
+    market_percent: str | None = Field(None, validation_alias="m%")
     caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
-    a: str | None = None  # Ask prices array
-    b: str | None = None  # Bid prices array
-    c: str | None = None  # Stock symbol
+    ask_prices: str | None = Field(None, validation_alias="a")  # "_" separated string
+    bid_prices: str | None = Field(None, validation_alias="b")  # "_" separated string
+    symbol: str | None = Field(None, validation_alias="c")
     hash_id: str | None = Field(None, validation_alias="#")
-    d: str | None = None  # Trade date
-    percent: str | None = Field(None, validation_alias="%")
-    ch: str | None = None  # Stock ticker
-    tlong: str | None = None  # Timestamp
-    ot: str | None = None
-    f: str | None = None  # Ask volumes array
-    g: str | None = None  # Bid volumes array
-    ip: str | None = None
-    mt: str | None = None
-    ov: str | None = None
-    h: str | None = None  # High price
-    i: str | None = None
-    it: str | None = None
-    oz: str | None = None
-    low_price: str | None = Field(None, validation_alias="l")  # Low price
-    n: str | None = None  # Stock name
-    o: str | None = None  # Open price
-    p: str | None = None
-    ex: str | None = None  # Exchange type
-    s: str | None = None
-    t: str | None = None  # Trade time
-    u: str | None = None  # Upper limit price
-    v: str | None = None  # Accumulated volume
-    w: str | None = None  # Lower limit price
-    nf: str | None = None  # Full company name
-    y: str | None = None  # Previous close price
-    z: str | None = None  # Last trade price
-    ts: str | None = None
+    trade_date: str | None = Field(None, validation_alias="d")
+    price_change_percent: str | None = Field(None, validation_alias="%")
+    ticker: str | None = Field(None, validation_alias="ch")
+    timestamp: str | None = Field(None, validation_alias="tlong")
+    order_time: str | None = Field(None, validation_alias="ot")
+    ask_volumes: str | None = Field(None, validation_alias="f")  # "_" separated string
+    bid_volumes: str | None = Field(None, validation_alias="g")  # "_" separated string
+    intraday_price: str | None = Field(None, validation_alias="ip")
+    market_time: str | None = Field(None, validation_alias="mt")
+    open_volume: str | None = Field(None, validation_alias="ov")
+    high_price: str | None = Field(None, validation_alias="h")
+    index: str | None = Field(None, validation_alias="i")
+    intraday_time: str | None = Field(None, validation_alias="it")
+    open_price_z: str | None = Field(None, validation_alias="oz")
+    low_price: str | None = Field(None, validation_alias="l")
+    name: str | None = Field(None, validation_alias="n")
+    open_price: str | None = Field(None, validation_alias="o")
+    price: str | None = Field(None, validation_alias="p")
+    exchange: str | None = Field(None, validation_alias="ex")  # TSE or OTC
+    sequence: str | None = Field(None, validation_alias="s")
+    time: str | None = Field(None, validation_alias="t")
+    upper_limit: str | None = Field(None, validation_alias="u")
+    accumulated_volume: str | None = Field(None, validation_alias="v")
+    lower_limit: str | None = Field(None, validation_alias="w")
+    full_name: str | None = Field(None, validation_alias="nf")
+    prev_close: str | None = Field(None, validation_alias="y")
+    last_price: str | None = Field(None, validation_alias="z")
+    tick_sequence: str | None = Field(None, validation_alias="ts")
 
     def _parse_float(self, value: str | None) -> float:
         """Parse string to float, handling None and invalid values."""
@@ -78,12 +78,12 @@ class StockInfo(BaseModel):
 
     def _get_mid_price(self) -> float:
         """Calculate mid price from best ask and bid prices."""
-        if not self.a or not self.b:
+        if not self.ask_prices or not self.bid_prices:
             return 0.0
 
         try:
-            asks = self.a.split("_")
-            bids = self.b.split("_")
+            asks = self.ask_prices.split("_")
+            bids = self.bid_prices.split("_")
             if not asks or not bids:
                 return 0.0
             ask = self._parse_float(asks[0])
@@ -94,26 +94,26 @@ class StockInfo(BaseModel):
 
     def _get_last_price(self) -> float:
         """Get last price from trade price or mid price."""
-        trade_price = self._parse_float(self.pz)
+        trade_price = self._parse_float(self.trade_price)
         return trade_price if trade_price > 0 else self._get_mid_price()
 
     def pretty_repr(self) -> str:
         """Format stock information in a human-readable string."""
-        if not self.c:
+        if not self.symbol:
             return ""
 
         last_price = self._get_last_price()
-        prev_close = self._parse_float(self.y)
+        prev_close = self._parse_float(self.prev_close)
         net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
 
         return (
-            f"{self.n}({self.c}), "
-            f"Open: {self._parse_float(self.o):.2f}, "
-            f"High: {self._parse_float(self.h):.2f}, "
+            f"{self.name}({self.symbol}), "
+            f"Open: {self._parse_float(self.open_price):.2f}, "
+            f"High: {self._parse_float(self.high_price):.2f}, "
             f"Low: {self._parse_float(self.low_price):.2f}, "
             f"Last: {last_price:.2f}, "
             f"Net Change: {net_change:.2f}%, "
-            f"Volume: {self._parse_int(self.v)}"
+            f"Volume: {self._parse_int(self.accumulated_volume)}"
         )
 
 
