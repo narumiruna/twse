@@ -1,14 +1,11 @@
-install:
-	poetry install
-
-lint:
-	poetry run ruff check .
+int:
+	uv run ruff check .
 
 test:
-	poetry run pytest -v -s --cov=. tests
+	uv run pytest -v -s --cov=src tests
 
 publish:
-	poetry build -f wheel
-	poetry publish
+	uv build --wheel
+	uv publish --token ${PYPI_TOKEN}
 
 .PHONY: lint test publish
