@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -98,22 +99,25 @@ class StockInfo(BaseModel):
         return trade_price if trade_price > 0 else self._get_mid_price()
 
     def pretty_repr(self) -> str:
-        """Format stock information in a human-readable string."""
+        """Format stock information in markdown format."""
         if not self.symbol:
             return ""
 
         last_price = self._get_last_price()
         prev_close = self._parse_float(self.prev_close)
         net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
+        net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
 
         return (
-            f"{self.name}({self.symbol}), "
-            f"Open: {self._parse_float(self.open_price):.2f}, "
-            f"High: {self._parse_float(self.high_price):.2f}, "
-            f"Low: {self._parse_float(self.low_price):.2f}, "
-            f"Last: {last_price:.2f}, "
-            f"Net Change: {net_change:.2f}%, "
-            f"Volume: {self._parse_int(self.accumulated_volume)}"
+            f"## {self.name} ({self.symbol})\n\n"
+            "| Indicator | Value |\n"
+            "|-----------|-------|\n"
+            f"| Open | NT${self._parse_float(self.open_price):,.2f} |\n"
+            f"| High | NT${self._parse_float(self.high_price):,.2f} |\n"
+            f"| Low | NT${self._parse_float(self.low_price):,.2f} |\n"
+            f"| Last | NT${last_price:,.2f} |\n"
+            f"| Change | {net_change_symbol} {net_change:+.2f}% |\n"
+            f"| Volume | {self._parse_int(self.accumulated_volume):,} |\n"
         )
 
 
@@ -143,15 +147,21 @@ class StockInfoResponse(BaseModel):
     cached_alive: int | None = Field(None, validation_alias="cachedAlive")
 
     def pretty_repr(self) -> str:
-        """Format response in a human-readable multi-line string."""
+        """Format response in markdown format."""
         if not self.msg_array:
-            return "No stock information available"
+            return "# No stock information available"
 
-        result = [f"Query Time: {self.query_time.sys_date} {self.query_time.sys_time}", "Stock Information:"]
+        # Format date from YYYYMMDD to YYYY-MM-DD
+        formatted_date = datetime.strptime(self.query_time.sys_date, "%Y%m%d").strftime("%Y-%m-%d")
+
+        result = [
+            "# Stock Market Information\n",
+            f"*Query Time: {formatted_date} {self.query_time.sys_time}*\n",
+        ]
 
         for stock in self.msg_array:
             if stock_info := stock.pretty_repr():
-                result.append(f"  {stock_info}")
+                result.append(stock_info)
 
         return "\n".join(result)
 
