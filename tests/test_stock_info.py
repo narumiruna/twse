@@ -14,16 +14,16 @@ def test_query_stock_info_success():
 
     # Verify TSMC stock data
     stock = response.msg_array[0]
-    assert stock.c == "2330"  # Stock code
-    assert stock.n == "台積電"  # Stock name
-    assert stock.nf == "台灣積體電路製造股份有限公司"  # Full company name
-    assert stock.ex == "tse"  # Exchange
+    assert stock.symbol == "2330"  # Stock code
+    assert stock.name == "台積電"  # Stock name
+    assert stock.full_name == "台灣積體電路製造股份有限公司"  # Full company name
+    assert stock.exchange == "tse"  # Exchange
 
     # Verify price and volume fields exist and are in correct format
-    assert stock.z is not None  # Current price
-    assert stock.v is not None  # Volume
-    assert stock.o is not None  # Opening price
-    assert stock.h is not None  # High price
+    assert stock.last_price is not None  # Current price
+    assert stock.accumulated_volume is not None  # Volume
+    assert stock.open_price is not None  # Opening price
+    assert stock.high_price is not None  # High price
     assert stock.low_price is not None  # Low price
 
 
@@ -35,7 +35,7 @@ def test_query_stock_info_multiple():
     assert len(response.msg_array) > 0
 
     # Verify we got data for both stocks
-    stock_codes = {stock.c for stock in response.msg_array if stock.c}
+    stock_codes = {stock.symbol for stock in response.msg_array if stock.symbol}
     assert "2330" in stock_codes
     assert "2317" in stock_codes
 
@@ -49,9 +49,9 @@ def test_query_stock_info_invalid():
 
     # Invalid stock entries should have minimal data
     stock = response.msg_array[1]  # Second entry is usually the invalid one
-    assert stock.tv == "-"
-    assert stock.z == "-"
-    assert not stock.c  # Empty string for invalid stock code
+    assert stock.trade_volume == "-"
+    assert stock.last_price == "-"
+    assert not stock.symbol  # Empty string for invalid stock code
 
 
 def test_query_stock_info_input_validation():
