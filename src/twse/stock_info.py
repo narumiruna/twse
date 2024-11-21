@@ -100,13 +100,20 @@ class StockInfo(BaseModel):
             return 0.0
 
         try:
-            asks = self.ask_prices.split("_")
-            bids = self.bid_prices.split("_")
+            asks = [self._parse_float(a) for a in self.ask_prices.split("_")]
+            bids = [self._parse_float(b) for b in self.bid_prices.split("_")]
             if not asks or not bids:
                 return 0.0
-            ask = self._parse_float(asks[0])
-            bid = self._parse_float(bids[0])
-            return (ask + bid) / 2.0
+
+            best_ask = min(asks)
+            best_bid = max(bids)
+
+            if best_ask == 0:
+                return best_bid
+            if best_bid == 0:
+                return best_ask
+
+            return (best_ask + best_bid) / 2.0
         except (IndexError, ValueError):
             return 0.0
 
