@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import time
-from datetime import datetime
 from typing import Any
 
 import httpx
@@ -181,14 +180,7 @@ class StockInfoResponse(BaseModel):
         if not self.msg_array:
             return "*No stock information available*"
 
-        # Format date from YYYYMMDD to YYYY-MM-DD
-        formatted_date = datetime.strptime(self.query_time.sys_date, "%Y%m%d").strftime("%Y-%m-%d")
-        formatted_time = escape_markdown(f"{formatted_date} {self.query_time.sys_time}")
-
-        result = [
-            f"⏰ {formatted_time}",
-        ]
-
+        result = []
         for stock in self.msg_array:
             if stock_info := stock.pretty_repr():
                 result.append(stock_info)
