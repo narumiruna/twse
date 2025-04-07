@@ -97,8 +97,9 @@ class StockInfo(BaseModel):
             logger.error("unable to convert {} to float: {}", value, e)
             return 0.0
 
-    def _get_mid_price(self) -> float:
-        if not self.ask_prices or not self.bid_prices:
+    @property
+    def mid_price(self) -> float:
+        if self.ask_prices is None or self.bid_prices is None:
             return 0.0
 
         asks = [float(a) for a in self.ask_prices.split("_") if a and a != "-"]
@@ -126,9 +127,8 @@ class StockInfo(BaseModel):
         if self.trade_price:
             lines.append(f"Trade Price: `{self.trade_price:,.2f}`")
 
-        mid_price = self._get_mid_price()
-        if mid_price:
-            lines.append(f"Mid Price: `{mid_price:,.2f}`")
+        if self.mid_price:
+            lines.append(f"Mid Price: `{self.mid_price:,.2f}`")
 
         if self.last_price:
             lines.append(f"Last Price: `{self.last_price:,.2f}`")
@@ -170,6 +170,11 @@ class StockInfoResponse(BaseModel):
     rtmessage: str | None = None
     ex_key: str | None = None
     cached_alive: int | None = None
+
+    @field_validator("msg_array", mode="after")
+    @classmethod
+    def filter_empty(cls, value: list[StockInfo]) -> list[StockInfo]:
+        return [stock for stock in value if stock.symbol and stock.name]
 
     def pretty_repr(self) -> str:
         if not self.msg_array:
