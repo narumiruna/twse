@@ -1,5 +1,3 @@
-"""Taiwan Stock Exchange (TWSE) real-time stock information API client."""
-
 from __future__ import annotations
 
 import re
@@ -7,10 +5,10 @@ import time
 from typing import Any
 
 import httpx
+from loguru import logger
 from pydantic import BaseModel
 from pydantic import Field
-
-from .convert import convert_float
+from pydantic import field_validator
 
 
 def escape_markdown(text: str | None) -> str:
@@ -33,15 +31,15 @@ class StockInfo(BaseModel):
     """Real-time stock information from TWSE."""
 
     exchange_id: str | None = Field(None, validation_alias="@")
-    trade_volume: str | None = Field(None, validation_alias="tv")
-    price_spread: str | None = Field(None, validation_alias="ps")
+    trade_volume: float = Field(None, validation_alias="tv")
+    price_spread: float = Field(None, validation_alias="ps")
     price_id: str | None = Field(None, validation_alias="pid")
-    trade_price: str | None = Field(None, validation_alias="pz")
-    best_price: str | None = Field(None, validation_alias="bp")
+    trade_price: float = Field(None, validation_alias="pz")
+    best_price: float = Field(None, validation_alias="bp")
     final_volume: str | None = Field(None, validation_alias="fv")
     best_ask_price: str | None = Field(None, validation_alias="oa")
     best_bid_price: str | None = Field(None, validation_alias="ob")
-    market_percent: str | None = Field(None, validation_alias="m%")
+    market_percent: float = Field(None, validation_alias="m%")
     caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
     ask_prices: str | None = Field(None, validation_alias="a")
@@ -55,27 +53,59 @@ class StockInfo(BaseModel):
     order_time: str | None = Field(None, validation_alias="ot")
     ask_volumes: str | None = Field(None, validation_alias="f")
     bid_volumes: str | None = Field(None, validation_alias="g")
-    intraday_price: str | None = Field(None, validation_alias="ip")
+    intraday_price: float = Field(None, validation_alias="ip")
     market_time: str | None = Field(None, validation_alias="mt")
     open_volume: str | None = Field(None, validation_alias="ov")
-    high_price: str | None = Field(None, validation_alias="h")
+    high_price: float = Field(None, validation_alias="h")
     index: str | None = Field(None, validation_alias="i")
     intraday_time: str | None = Field(None, validation_alias="it")
     open_price_z: str | None = Field(None, validation_alias="oz")
-    low_price: str | None = Field(None, validation_alias="l")
+    low_price: float = Field(None, validation_alias="l")
     name: str | None = Field(None, validation_alias="n")
-    open_price: str | None = Field(None, validation_alias="o")
-    price: str | None = Field(None, validation_alias="p")
+    open_price: float = Field(None, validation_alias="o")
+    price: float = Field(None, validation_alias="p")
     exchange: str | None = Field(None, validation_alias="ex")  # TSE or OTC
     sequence: str | None = Field(None, validation_alias="s")
     time: str | None = Field(None, validation_alias="t")
-    upper_limit: str | None = Field(None, validation_alias="u")
-    accumulated_volume: str | None = Field(None, validation_alias="v")
-    lower_limit: str | None = Field(None, validation_alias="w")
+    upper_limit: float = Field(None, validation_alias="u")
+    accumulated_volume: float = Field(None, validation_alias="v")
+    lower_limit: float = Field(None, validation_alias="w")
     full_name: str | None = Field(None, validation_alias="nf")
-    prev_close: str | None = Field(None, validation_alias="y")
-    last_price: str | None = Field(None, validation_alias="z")
+    prev_close: float = Field(None, validation_alias="y")
+    last_price: float = Field(None, validation_alias="z")
     tick_sequence: str | None = Field(None, validation_alias="ts")
+
+    @field_validator(
+        "trade_volume",
+        "price_spread",
+        "trade_price",
+        "best_price",
+        "market_percent",
+        "intraday_price",
+        "high_price",
+        "low_price",
+        "open_price",
+        "price",
+        "upper_limit",
+        "accumulated_volume",
+        "lower_limit",
+        "prev_close",
+        "last_price",
+        mode="before",
+    )
+    @classmethod
+    def convert_float(cls, value: str | None) -> float | None:
+        if value is None:
+            return 0.0
+
+        if value == "-":
+            return 0.0
+
+        try:
+            return float(value)
+        except ValueError as e:
+            logger.error("unable to convert {} to float: {}", value, e)
+            return 0.0
 
     def _get_mid_price(self) -> float:
         """Calculate mid price from best ask and bid prices."""
@@ -98,9 +128,9 @@ class StockInfo(BaseModel):
         if not self.symbol:
             return ""
 
-        open_price = escape_markdown(f"{convert_float(self.open_price):,.2f}")
-        high_price = escape_markdown(f"{convert_float(self.high_price):,.2f}")
-        low_price = escape_markdown(f"{convert_float(self.low_price):,.2f}")
+        open_price = escape_markdown(f"{self.open_price:,.2f}")
+        high_price = escape_markdown(f"{self.high_price:,.2f}")
+        low_price = escape_markdown(f"{self.low_price:,.2f}")
 
         lines = [
             f"📊 *{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*",
@@ -109,30 +139,26 @@ class StockInfo(BaseModel):
             f"Low: `{low_price}`",
         ]
 
-        trade_price = convert_float(self.trade_price)
         if self.trade_price:
-            lines.append(f"Trade Price: `{trade_price:,.2f}`")
+            lines.append(f"Trade Price: `{self.trade_price:,.2f}`")
 
         mid_price = self._get_mid_price()
         if mid_price:
             lines.append(f"Mid Price: `{mid_price:,.2f}`")
 
-        last_price = convert_float(self.last_price)
         if self.last_price:
-            lines.append(f"Last Price: `{last_price:,.2f}`")
+            lines.append(f"Last Price: `{self.last_price:,.2f}`")
 
-        prev_close = convert_float(self.prev_close)
-        if prev_close:
-            lines.append(f"Prev Close: `{prev_close:,.2f}`")
+        if self.prev_close:
+            lines.append(f"Prev Close: `{self.prev_close:,.2f}`")
 
-        net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
+        net_change = ((self.last_price / self.prev_close - 1.0) * 100) if self.prev_close > 0 else 0.0
         if net_change:
             net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
             lines.append(f"Change: {net_change_symbol} `{net_change:+.2f}%`")
 
-        volume = convert_float(self.accumulated_volume)
-        if volume:
-            lines.append(f"Volume: `{volume:,}`")
+        if self.accumulated_volume:
+            lines.append(f"Volume: `{self.accumulated_volume:,}`")
 
         return "\n".join(lines)
 

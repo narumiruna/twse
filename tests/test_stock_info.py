@@ -42,16 +42,15 @@ def test_query_stock_info_multiple():
 
 def test_query_stock_info_invalid():
     """Test querying an invalid stock code."""
-    response = query_stock_info("0000")  # Invalid stock code
+    response = query_stock_info("0000")
 
     assert response.rtmessage == "OK"
     assert len(response.msg_array) > 0
 
-    # Invalid stock entries should have minimal data
-    stock = response.msg_array[1]  # Second entry is usually the invalid one
-    assert stock.trade_volume == "-"
-    assert stock.last_price == "-"
-    assert not stock.symbol  # Empty string for invalid stock code
+    stock = response.msg_array[1]
+    assert stock.trade_volume == 0
+    assert stock.last_price == 0
+    assert not stock.symbol
 
 
 def test_query_stock_info_input_validation():
