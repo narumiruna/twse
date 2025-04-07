@@ -9,8 +9,8 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 from pydantic import ConfigDict
-from pydantic import Field
 from pydantic import field_validator
+from pydantic.alias_generators import to_camel
 
 from .constants import STOCK_INFO_ALIAS
 from .utils import save_json
@@ -165,29 +165,29 @@ class StockInfo(BaseModel):
 
 
 class QueryTime(BaseModel):
-    """Query time information from TWSE."""
+    model_config = ConfigDict(alias_generator=to_camel)
 
-    sys_date: str = Field(validation_alias="sysDate")
-    stock_info_item: int = Field(validation_alias="stockInfoItem")
-    stock_info: int = Field(validation_alias="stockInfo")
-    session_str: str = Field(validation_alias="sessionStr")
-    sys_time: str = Field(validation_alias="sysTime")
-    show_chart: bool = Field(validation_alias="showChart")
-    session_from_time: int = Field(validation_alias="sessionFromTime")
-    session_latest_time: int = Field(validation_alias="sessionLatestTime")
+    sys_date: str
+    stock_info_item: int
+    stock_info: int
+    session_str: str
+    sys_time: str
+    show_chart: bool
+    session_from_time: int
+    session_latest_time: int
 
 
 class StockInfoResponse(BaseModel):
-    """Response from TWSE stock information API."""
+    model_config = ConfigDict(alias_generator=to_camel)
 
-    msg_array: list[StockInfo] = Field(validation_alias="msgArray")
+    msg_array: list[StockInfo]
     referer: str | None = None
-    user_delay: int | None = Field(None, validation_alias="userDelay")
+    user_delay: int | None = None
     rtcode: str | None = None
-    query_time: QueryTime = Field(validation_alias="queryTime")
+    query_time: QueryTime
     rtmessage: str | None = None
-    ex_key: str | None = Field(None, validation_alias="exKey")
-    cached_alive: int | None = Field(None, validation_alias="cachedAlive")
+    ex_key: str | None = None
+    cached_alive: int | None = None
 
     def pretty_repr(self) -> str:
         """Format response in Telegram MarkdownV2 format."""
