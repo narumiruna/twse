@@ -97,7 +97,6 @@ class StockInfo(BaseModel):
             return 0.0
 
     def _get_mid_price(self) -> float:
-        """Calculate mid price from best ask and bid prices."""
         if not self.ask_prices or not self.bid_prices:
             return 0.0
 
@@ -113,7 +112,6 @@ class StockInfo(BaseModel):
             return (max(bids) + min(asks)) / 2.0
 
     def pretty_repr(self) -> str:
-        """Format stock information in Telegram MarkdownV2 format."""
         if not self.symbol:
             return ""
 
@@ -173,7 +171,6 @@ class StockInfoResponse(BaseModel):
     cached_alive: int | None = None
 
     def pretty_repr(self) -> str:
-        """Format response in Telegram MarkdownV2 format."""
         if not self.msg_array:
             return "*No stock information available*"
 
@@ -186,7 +183,6 @@ class StockInfoResponse(BaseModel):
 
 
 def build_ex_ch(symbols: list[str]) -> str:
-    """Build exchange channel string for API request."""
     strings = []
     for symbol in symbols:
         if symbol.isdigit():
@@ -196,18 +192,7 @@ def build_ex_ch(symbols: list[str]) -> str:
     return "|".join(strings)
 
 
-def query_stock_info(symbols: str | list[str], output_json: str | None = None) -> StockInfoResponse:
-    """Query real-time stock information from TWSE.
-
-    Args:
-        symbols: Stock symbol(s) to query. Can be a single symbol string or list of symbols.
-
-    Returns:
-        StockInfoResponse containing the queried stock information.
-
-    Raises:
-        httpx.HTTPError: If the API request fails.
-    """
+def get_stock_info(symbols: str | list[str], output_json: str | None = None) -> StockInfoResponse:
     if isinstance(symbols, str):
         symbols = [symbols]
 

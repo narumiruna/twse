@@ -1,11 +1,11 @@
 import pytest
 
-from twse.stock_info import query_stock_info
+from twse.stock_info import get_stock_info
 
 
 def test_query_stock_info_success():
     """Test successful stock info query for TSMC (2330)."""
-    response = query_stock_info("2330")
+    response = get_stock_info("2330")
 
     # Verify response structure
     assert response.rtmessage == "OK"
@@ -29,7 +29,7 @@ def test_query_stock_info_success():
 
 def test_query_stock_info_multiple():
     """Test querying multiple stocks at once."""
-    response = query_stock_info(["2330", "2317"])  # TSMC and Hon Hai
+    response = get_stock_info(["2330", "2317"])  # TSMC and Hon Hai
 
     assert response.rtmessage == "OK"
     assert len(response.msg_array) > 0
@@ -42,7 +42,7 @@ def test_query_stock_info_multiple():
 
 def test_query_stock_info_invalid():
     """Test querying an invalid stock code."""
-    response = query_stock_info("0000")
+    response = get_stock_info("0000")
 
     assert response.rtmessage == "OK"
     assert len(response.msg_array) > 0
@@ -56,10 +56,10 @@ def test_query_stock_info_invalid():
 def test_query_stock_info_input_validation():
     """Test input validation for stock codes."""
     with pytest.raises(ValueError):
-        query_stock_info("")  # Empty string
+        get_stock_info("")  # Empty string
 
     with pytest.raises(ValueError):
-        query_stock_info([])  # Empty list
+        get_stock_info([])  # Empty list
 
     with pytest.raises(TypeError):
-        query_stock_info(None)  # None value
+        get_stock_info(None)  # None value
