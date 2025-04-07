@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import time
 from typing import Any
+from typing import Literal
 
 import httpx
 from loguru import logger
@@ -64,7 +65,7 @@ class StockInfo(BaseModel):
     name: str | None = Field(None, validation_alias="n")
     open_price: float | None = Field(None, validation_alias="o")
     price: float | None = Field(None, validation_alias="p")
-    exchange: str | None = Field(None, validation_alias="ex")  # TSE or OTC
+    exchange: Literal["tse", "otc"] | None = Field(None, validation_alias="ex")
     sequence: str | None = Field(None, validation_alias="s")
     time: str | None = Field(None, validation_alias="t")
     upper_limit: float | None = Field(None, validation_alias="u")
