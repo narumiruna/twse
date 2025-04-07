@@ -31,15 +31,15 @@ class StockInfo(BaseModel):
     """Real-time stock information from TWSE."""
 
     exchange_id: str | None = Field(None, validation_alias="@")
-    trade_volume: float = Field(None, validation_alias="tv")
-    price_spread: float = Field(None, validation_alias="ps")
+    trade_volume: float | None = Field(None, validation_alias="tv")
+    price_spread: float | None = Field(None, validation_alias="ps")
     price_id: str | None = Field(None, validation_alias="pid")
-    trade_price: float = Field(None, validation_alias="pz")
-    best_price: float = Field(None, validation_alias="bp")
+    trade_price: float | None = Field(None, validation_alias="pz")
+    best_price: float | None = Field(None, validation_alias="bp")
     final_volume: str | None = Field(None, validation_alias="fv")
     best_ask_price: str | None = Field(None, validation_alias="oa")
     best_bid_price: str | None = Field(None, validation_alias="ob")
-    market_percent: float = Field(None, validation_alias="m%")
+    market_percent: float | None = Field(None, validation_alias="m%")
     caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
     ask_prices: str | None = Field(None, validation_alias="a")
@@ -53,26 +53,26 @@ class StockInfo(BaseModel):
     order_time: str | None = Field(None, validation_alias="ot")
     ask_volumes: str | None = Field(None, validation_alias="f")
     bid_volumes: str | None = Field(None, validation_alias="g")
-    intraday_price: float = Field(None, validation_alias="ip")
+    intraday_price: float | None = Field(None, validation_alias="ip")
     market_time: str | None = Field(None, validation_alias="mt")
     open_volume: str | None = Field(None, validation_alias="ov")
-    high_price: float = Field(None, validation_alias="h")
+    high_price: float | None = Field(None, validation_alias="h")
     index: str | None = Field(None, validation_alias="i")
     intraday_time: str | None = Field(None, validation_alias="it")
     open_price_z: str | None = Field(None, validation_alias="oz")
-    low_price: float = Field(None, validation_alias="l")
+    low_price: float | None = Field(None, validation_alias="l")
     name: str | None = Field(None, validation_alias="n")
-    open_price: float = Field(None, validation_alias="o")
-    price: float = Field(None, validation_alias="p")
+    open_price: float | None = Field(None, validation_alias="o")
+    price: float | None = Field(None, validation_alias="p")
     exchange: str | None = Field(None, validation_alias="ex")  # TSE or OTC
     sequence: str | None = Field(None, validation_alias="s")
     time: str | None = Field(None, validation_alias="t")
-    upper_limit: float = Field(None, validation_alias="u")
-    accumulated_volume: float = Field(None, validation_alias="v")
-    lower_limit: float = Field(None, validation_alias="w")
+    upper_limit: float | None = Field(None, validation_alias="u")
+    accumulated_volume: float | None = Field(None, validation_alias="v")
+    lower_limit: float | None = Field(None, validation_alias="w")
     full_name: str | None = Field(None, validation_alias="nf")
-    prev_close: float = Field(None, validation_alias="y")
-    last_price: float = Field(None, validation_alias="z")
+    prev_close: float | None = Field(None, validation_alias="y")
+    last_price: float | None = Field(None, validation_alias="z")
     tick_sequence: str | None = Field(None, validation_alias="ts")
 
     @field_validator(
@@ -149,13 +149,12 @@ class StockInfo(BaseModel):
         if self.last_price:
             lines.append(f"Last Price: `{self.last_price:,.2f}`")
 
-        if self.prev_close:
+        if self.prev_close and self.last_price:
             lines.append(f"Prev Close: `{self.prev_close:,.2f}`")
 
-        net_change = ((self.last_price / self.prev_close - 1.0) * 100) if self.prev_close > 0 else 0.0
-        if net_change:
-            net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
-            lines.append(f"Change: {net_change_symbol} `{net_change:+.2f}%`")
+            net_change = (self.last_price / self.prev_close - 1.0) * 100
+            price_trend_icon = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
+            lines.append(f"Change: {price_trend_icon} `{net_change:+.2f}%`")
 
         if self.accumulated_volume:
             lines.append(f"Volume: `{self.accumulated_volume:,}`")
