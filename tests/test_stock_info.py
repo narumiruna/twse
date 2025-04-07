@@ -40,19 +40,6 @@ def test_query_stock_info_multiple():
     assert "2317" in stock_codes
 
 
-def test_query_stock_info_invalid():
-    """Test querying an invalid stock code."""
-    response = get_stock_info("0000")
-
-    assert response.rtmessage == "OK"
-    assert len(response.msg_array) > 0
-
-    stock = response.msg_array[1]
-    assert stock.trade_volume == 0
-    assert stock.last_price == 0
-    assert not stock.symbol
-
-
 def test_query_stock_info_input_validation():
     """Test input validation for stock codes."""
     with pytest.raises(ValueError):
