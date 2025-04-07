@@ -12,14 +12,13 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.alias_generators import to_camel
 
-from .constants import STOCK_INFO_ALIAS
 from .utils import save_json
+from .utils import to_alias
 
 
 class StockInfo(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=lambda field_name: STOCK_INFO_ALIAS.get(field_name, field_name),
-    )
+    model_config = ConfigDict(alias_generator=to_alias)
+
     exchange_id: str | None = None
     trade_volume: float | None = None
     price_spread: float | None = None
