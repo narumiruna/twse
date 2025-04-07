@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
+from .utils import save_json
+
 
 def escape_markdown(text: str | None) -> str:
     """Escape special characters for Telegram MarkdownV2 format.
@@ -212,7 +214,7 @@ def build_ex_ch(symbols: list[str]) -> str:
     return "|".join(strings)
 
 
-def query_stock_info(symbols: str | list[str]) -> StockInfoResponse:
+def query_stock_info(symbols: str | list[str], output_json: str | None = None) -> StockInfoResponse:
     """Query real-time stock information from TWSE.
 
     Args:
@@ -237,9 +239,8 @@ def query_stock_info(symbols: str | list[str]) -> StockInfoResponse:
     url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
     resp = httpx.get(url, params=params)
     resp.raise_for_status()
-    import json
 
-    with open("info.json", "w") as fp:
-        json.dump(resp.json(), fp, indent=2, ensure_ascii=False)
+    if output_json:
+        save_json(resp.json(), output_json)
 
     return StockInfoResponse.model_validate(resp.json())
