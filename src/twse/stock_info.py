@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from typing import Any
 from typing import Literal
 
@@ -192,22 +193,28 @@ def build_ex_ch(symbols: list[str]) -> str:
     return "|".join(strings)
 
 
-def get_stock_info(symbols: str | list[str], output_json: str | None = None) -> StockInfoResponse:
+def build_params(symbols: str | list[str]) -> dict[str, Any]:
     if isinstance(symbols, str):
         symbols = [symbols]
-
-    params: dict[str, Any] = {
+    return {
         "ex_ch": build_ex_ch(symbols),
         "json": 1,
         "delay": 0,
         "_": int(time.time() * 1000),
     }
 
+
+def get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
     url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
-    resp = httpx.get(url, params=params)
+    resp = httpx.get(url, params=build_params(symbols))
     resp.raise_for_status()
 
-    if output_json:
-        save_json(resp.json(), output_json)
-
     return StockInfoResponse.model_validate(resp.json())
+
+
+def save_stock_info(symbols: str | list[str], output_json: str | Path) -> None:
+    url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
+    resp = httpx.get(url, params=build_params(symbols))
+    resp.raise_for_status()
+
+    save_json(resp.json(), output_json)
