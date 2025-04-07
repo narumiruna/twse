@@ -9,60 +9,58 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 from pydantic import field_validator
 from pydantic.alias_generators import to_camel
 
 from .utils import save_json
-from .utils import to_alias
 
 
 class StockInfo(BaseModel):
-    model_config = ConfigDict(alias_generator=to_alias)
-
-    exchange_id: str | None = None
-    trade_volume: float | None = None
-    price_spread: float | None = None
-    price_id: str | None = None
-    trade_price: float | None = None
-    best_price: float | None = None
-    final_volume: str | None = None
-    best_ask_price: str | None = None
-    best_bid_price: str | None = None
-    market_percent: float | None = None
-    caret: str | None = None
+    exchange_id: str | None = Field(None, validation_alias="@")
+    trade_volume: float | None = Field(None, validation_alias="tv")
+    price_spread: float | None = Field(None, validation_alias="ps")
+    price_id: str | None = Field(None, validation_alias="pid")
+    trade_price: float | None = Field(None, validation_alias="pz")
+    best_price: float | None = Field(None, validation_alias="bp")
+    final_volume: str | None = Field(None, validation_alias="fv")
+    best_ask_price: str | None = Field(None, validation_alias="oa")
+    best_bid_price: str | None = Field(None, validation_alias="ob")
+    market_percent: float | None = Field(None, validation_alias="m%")
+    caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
-    ask_prices: str | None = None
-    bid_prices: str | None = None
-    symbol: str | None = None
-    hash_id: str | None = None
-    trade_date: str | None = None
-    price_change_percent: str | None = None
-    ticker: str | None = None
-    timestamp: str | None = None
-    order_time: str | None = None
-    ask_volumes: str | None = None
-    bid_volumes: str | None = None
-    intraday_price: float | None = None
-    market_time: str | None = None
-    open_volume: str | None = None
-    high_price: float | None = None
-    index: str | None = None
-    intraday_time: str | None = None
-    open_price_z: str | None = None
-    low_price: float | None = None
-    name: str | None = None
-    open_price: float | None = None
-    price: float | None = None
-    exchange: Literal["tse", "otc"] | None = None
-    sequence: str | None = None
-    time: str | None = None
-    upper_limit: float | None = None
-    accumulated_volume: float | None = None
-    lower_limit: float | None = None
-    full_name: str | None = None
-    prev_close: float | None = None
-    last_price: float | None = None
-    tick_sequence: str | None = None
+    ask_prices: str | None = Field(None, validation_alias="a")
+    bid_prices: str | None = Field(None, validation_alias="b")
+    symbol: str | None = Field(None, validation_alias="c")
+    hash_id: str | None = Field(None, validation_alias="#")
+    trade_date: str | None = Field(None, validation_alias="d")
+    price_change_percent: str | None = Field(None, validation_alias="%")
+    ticker: str | None = Field(None, validation_alias="ch")
+    timestamp: str | None = Field(None, validation_alias="tlong")
+    order_time: str | None = Field(None, validation_alias="ot")
+    ask_volumes: str | None = Field(None, validation_alias="f")
+    bid_volumes: str | None = Field(None, validation_alias="g")
+    intraday_price: float | None = Field(None, validation_alias="ip")
+    market_time: str | None = Field(None, validation_alias="mt")
+    open_volume: str | None = Field(None, validation_alias="ov")
+    high_price: float | None = Field(None, validation_alias="h")
+    index: str | None = Field(None, validation_alias="i")
+    intraday_time: str | None = Field(None, validation_alias="it")
+    open_price_z: str | None = Field(None, validation_alias="oz")
+    low_price: float | None = Field(None, validation_alias="l")
+    name: str | None = Field(None, validation_alias="n")
+    open_price: float | None = Field(None, validation_alias="o")
+    price: float | None = Field(None, validation_alias="p")
+    exchange: Literal["tse", "otc"] | None = Field(None, validation_alias="ex")
+    sequence: str | None = Field(None, validation_alias="s")
+    time: str | None = Field(None, validation_alias="t")
+    upper_limit: float | None = Field(None, validation_alias="u")
+    accumulated_volume: float | None = Field(None, validation_alias="v")
+    lower_limit: float | None = Field(None, validation_alias="w")
+    full_name: str | None = Field(None, validation_alias="nf")
+    prev_close: float | None = Field(None, validation_alias="y")
+    last_price: float | None = Field(None, validation_alias="z")
+    tick_sequence: str | None = Field(None, validation_alias="ts")
 
     @field_validator(
         "trade_volume",
