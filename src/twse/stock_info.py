@@ -10,6 +10,8 @@ import httpx
 from pydantic import BaseModel
 from pydantic import Field
 
+from .convert import convert_float
+
 
 def escape_markdown(text: str | None) -> str:
     """Escape special characters for Telegram MarkdownV2 format.
@@ -75,79 +77,64 @@ class StockInfo(BaseModel):
     last_price: str | None = Field(None, validation_alias="z")
     tick_sequence: str | None = Field(None, validation_alias="ts")
 
-    def _parse_float(self, value: str | None) -> float:
-        """Parse string to float, handling None and invalid values."""
-        if not value or value == "-":
-            return 0.0
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            return 0.0
-
-    def _parse_int(self, value: str | None) -> int:
-        """Parse string to integer, handling None and invalid values."""
-        if not value or value == "-":
-            return 0
-        try:
-            return int(value)
-        except (ValueError, TypeError):
-            return 0
-
     def _get_mid_price(self) -> float:
         """Calculate mid price from best ask and bid prices."""
         if not self.ask_prices or not self.bid_prices:
             return 0.0
 
-        try:
-            asks = [self._parse_float(a) for a in self.ask_prices.split("_")]
-            bids = [self._parse_float(b) for b in self.bid_prices.split("_")]
-            if not asks or not bids:
-                return 0.0
-
-            best_ask = min(asks)
-            best_bid = max(bids)
-
-            if best_ask == 0:
-                return best_bid
-            if best_bid == 0:
-                return best_ask
-
-            return (best_ask + best_bid) / 2.0
-        except (IndexError, ValueError):
+        asks = [float(a) for a in self.ask_prices.split("_") if a and a != "-"]
+        bids = [float(b) for b in self.bid_prices.split("_") if b and b != "-"]
+        if len(asks) == 0 and len(bids) == 0:
             return 0.0
-
-    def _get_last_price(self) -> float:
-        """Get last price from trade price or mid price."""
-        trade_price = self._parse_float(self.trade_price)
-        return trade_price if trade_price > 0 else self._get_mid_price()
+        elif len(asks) == 0:
+            return max(bids)
+        elif len(bids) == 0:
+            return min(asks)
+        else:
+            return (max(bids) + min(asks)) / 2.0
 
     def pretty_repr(self) -> str:
         """Format stock information in Telegram MarkdownV2 format."""
         if not self.symbol:
             return ""
 
-        last_price = self._get_last_price()
-        prev_close = self._parse_float(self.prev_close)
+        open_price = escape_markdown(f"{convert_float(self.open_price):,.2f}")
+        high_price = escape_markdown(f"{convert_float(self.high_price):,.2f}")
+        low_price = escape_markdown(f"{convert_float(self.low_price):,.2f}")
+
+        lines = [
+            f"📊 *{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*",
+            f"Open: `{open_price}`",
+            f"High: `{high_price}`",
+            f"Low: `{low_price}`",
+        ]
+
+        trade_price = convert_float(self.trade_price)
+        if self.trade_price:
+            lines.append(f"Trade Price: `{trade_price:,.2f}`")
+
+        mid_price = self._get_mid_price()
+        if mid_price:
+            lines.append(f"Mid Price: `{mid_price:,.2f}`")
+
+        last_price = convert_float(self.last_price)
+        if self.last_price:
+            lines.append(f"Last Price: `{last_price:,.2f}`")
+
+        prev_close = convert_float(self.prev_close)
+        if prev_close:
+            lines.append(f"Prev Close: `{prev_close:,.2f}`")
+
         net_change = ((last_price / prev_close - 1.0) * 100) if prev_close > 0 else 0.0
-        net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
+        if net_change:
+            net_change_symbol = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
+            lines.append(f"Change: {net_change_symbol} `{net_change:+.2f}%`")
 
-        # Format numbers with escaped special characters
-        open_price = escape_markdown(f"{self._parse_float(self.open_price):,.2f}")
-        high_price = escape_markdown(f"{self._parse_float(self.high_price):,.2f}")
-        low_price = escape_markdown(f"{self._parse_float(self.low_price):,.2f}")
-        last_price_str = escape_markdown(f"{last_price:,.2f}")
-        net_change_str = escape_markdown(f"{net_change:+.2f}%")
-        volume = escape_markdown(f"{self._parse_int(self.accumulated_volume):,}")
+        volume = convert_float(self.accumulated_volume)
+        if volume:
+            lines.append(f"Volume: `{volume:,}`")
 
-        return (
-            f"📊 *{escape_markdown(self.name)} \\({escape_markdown(self.symbol)}\\)*\n"
-            f"Open: `{open_price}`\n"
-            f"High: `{high_price}`\n"
-            f"Low: `{low_price}`\n"
-            f"Last: `{last_price_str}`\n"
-            f"Change: {net_change_symbol} `{net_change_str}`\n"
-            f"Volume: `{volume}`"
-        )
+        return "\n".join(lines)
 
 
 class QueryTime(BaseModel):
@@ -224,5 +211,9 @@ def query_stock_info(symbols: str | list[str]) -> StockInfoResponse:
     url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
     resp = httpx.get(url, params=params)
     resp.raise_for_status()
+    import json
+
+    with open("info.json", "w") as fp:
+        json.dump(resp.json(), fp, indent=2, ensure_ascii=False)
 
     return StockInfoResponse.model_validate(resp.json())
