@@ -42,8 +42,8 @@ class StockInfo(BaseModel):
     market_percent: str | None = Field(None, validation_alias="m%")
     caret: str | None = Field(None, validation_alias="^")
     key: str | None = None
-    ask_prices: str | None = Field(None, validation_alias="a")  # "_" separated string
-    bid_prices: str | None = Field(None, validation_alias="b")  # "_" separated string
+    ask_prices: str | None = Field(None, validation_alias="a")
+    bid_prices: str | None = Field(None, validation_alias="b")
     symbol: str | None = Field(None, validation_alias="c")
     hash_id: str | None = Field(None, validation_alias="#")
     trade_date: str | None = Field(None, validation_alias="d")
@@ -51,8 +51,8 @@ class StockInfo(BaseModel):
     ticker: str | None = Field(None, validation_alias="ch")
     timestamp: str | None = Field(None, validation_alias="tlong")
     order_time: str | None = Field(None, validation_alias="ot")
-    ask_volumes: str | None = Field(None, validation_alias="f")  # "_" separated string
-    bid_volumes: str | None = Field(None, validation_alias="g")  # "_" separated string
+    ask_volumes: str | None = Field(None, validation_alias="f")
+    bid_volumes: str | None = Field(None, validation_alias="g")
     intraday_price: str | None = Field(None, validation_alias="ip")
     market_time: str | None = Field(None, validation_alias="mt")
     open_volume: str | None = Field(None, validation_alias="ov")
