@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import time
 from typing import Any
 from typing import Literal
@@ -14,22 +13,6 @@ from pydantic.alias_generators import to_camel
 
 from .constants import STOCK_INFO_ALIAS
 from .utils import save_json
-
-
-def escape_markdown(text: str | None) -> str:
-    """Escape special characters for Telegram MarkdownV2 format.
-
-    Args:
-        text: Text to escape, can be None
-
-    Returns:
-        Escaped text string, or empty string if input is None
-    """
-    if text is None:
-        return ""
-
-    pattern = r"([_*\[\]()~`>#+=|{}.!-])"
-    return re.sub(pattern, r"\\\1", text)
 
 
 class StockInfo(BaseModel):
