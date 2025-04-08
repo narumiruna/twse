@@ -101,6 +101,11 @@ class StockInfo(BaseModel):
 
         asks = [float(a) for a in self.ask_prices.split("_") if a and a != "-"]
         bids = [float(b) for b in self.bid_prices.split("_") if b and b != "-"]
+
+        # Filter out non-positive values
+        asks = [a for a in asks if a > 0]
+        bids = [b for b in bids if b > 0]
+
         if len(asks) == 0 and len(bids) == 0:
             return 0.0
         elif len(asks) == 0:
