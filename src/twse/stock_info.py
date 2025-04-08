@@ -130,10 +130,12 @@ class StockInfo(BaseModel):
         if self.last_price:
             lines.append(f"Last Price: `{self.last_price:,.2f}`")
 
-        if self.prev_close and self.last_price:
+        price = self.last_price or self.trade_price or self.mid_price
+
+        if self.prev_close and price:
             lines.append(f"Prev Close: `{self.prev_close:,.2f}`")
 
-            net_change = (self.last_price / self.prev_close - 1.0) * 100
+            net_change = (price / self.prev_close - 1.0) * 100
             price_trend_icon = "🔺" if net_change > 0 else "🔻" if net_change < 0 else "⏸️"
             lines.append(f"Change: {price_trend_icon} `{net_change:+.2f}%`")
 
