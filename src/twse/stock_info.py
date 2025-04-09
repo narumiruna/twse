@@ -222,6 +222,14 @@ def get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
     return StockInfoResponse.model_validate(resp.json())
 
 
+async def async_get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(URL, params=build_params(symbols))
+        resp.raise_for_status()
+
+        return StockInfoResponse.model_validate(resp.json())
+
+
 def save_stock_info(symbols: str | list[str], output_json: str | Path) -> None:
     resp = httpx.get(URL, params=build_params(symbols))
     resp.raise_for_status()
