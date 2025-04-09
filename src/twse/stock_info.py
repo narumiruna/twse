@@ -15,6 +15,8 @@ from pydantic.alias_generators import to_camel
 
 from .utils import save_json
 
+URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
+
 
 class StockInfo(BaseModel):
     exchange_id: str | None = Field(None, validation_alias="@")
@@ -214,16 +216,14 @@ def build_params(symbols: str | list[str]) -> dict[str, Any]:
 
 
 def get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
-    url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
-    resp = httpx.get(url, params=build_params(symbols))
+    resp = httpx.get(URL, params=build_params(symbols))
     resp.raise_for_status()
 
     return StockInfoResponse.model_validate(resp.json())
 
 
 def save_stock_info(symbols: str | list[str], output_json: str | Path) -> None:
-    url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
-    resp = httpx.get(url, params=build_params(symbols))
+    resp = httpx.get(URL, params=build_params(symbols))
     resp.raise_for_status()
 
     save_json(resp.json(), output_json)
