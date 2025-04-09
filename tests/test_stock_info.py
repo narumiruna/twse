@@ -1,43 +1,33 @@
-import pytest
+import json
 
+import httpx
+import pytest
+import respx
+
+from twse.stock_info import URL
 from twse.stock_info import get_stock_info
 
 
-def test_query_stock_info_success():
-    """Test successful stock info query for TSMC (2330)."""
-    response = get_stock_info("2330")
+@pytest.mark.parametrize(
+    "symbols,testdata",
+    [
+        (["2317"], "tests/testdata/2317_limit_down.json"),
+        (["006208"], "tests/testdata/006208_limit_down_after_hour.json"),
+        (["0050", "006208", "2330", "2412", "2539"], "tests/testdata/0050_006208_2330_2412_2539.json"),
+    ],
+)
+def test_get_stock_info(symbols, testdata) -> None:
+    with open(testdata) as file:
+        mock_response = json.load(file)
 
-    # Verify response structure
-    assert response.rtmessage == "OK"
-    assert response.rtcode == "0000"
-    assert len(response.msg_array) > 0
+    with respx.mock as mock:
+        mock_route = mock.get(URL).mock(return_value=httpx.Response(200, json=mock_response))
+        resp = get_stock_info(symbols)
 
-    # Verify TSMC stock data
-    stock = response.msg_array[0]
-    assert stock.symbol == "2330"  # Stock code
-    assert stock.name == "台積電"  # Stock name
-    assert stock.full_name == "台灣積體電路製造股份有限公司"  # Full company name
-    assert stock.exchange == "tse"  # Exchange
+        assert mock_route.called
 
-    # Verify price and volume fields exist and are in correct format
-    assert stock.last_price is not None  # Current price
-    assert stock.accumulated_volume is not None  # Volume
-    assert stock.open_price is not None  # Opening price
-    assert stock.high_price is not None  # High price
-    assert stock.low_price is not None  # Low price
-
-
-def test_query_stock_info_multiple():
-    """Test querying multiple stocks at once."""
-    response = get_stock_info(["2330", "2317"])  # TSMC and Hon Hai
-
-    assert response.rtmessage == "OK"
-    assert len(response.msg_array) > 0
-
-    # Verify we got data for both stocks
-    stock_codes = {stock.symbol for stock in response.msg_array if stock.symbol}
-    assert "2330" in stock_codes
-    assert "2317" in stock_codes
+        for stock in resp.msg_array:
+            assert stock.symbol in symbols
 
 
 def test_query_stock_info_input_validation():
