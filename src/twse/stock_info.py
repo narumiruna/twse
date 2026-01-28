@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 import time
 from pathlib import Path
 from typing import Any
 from typing import Literal
 
 import httpx
-from loguru import logger
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
@@ -14,6 +15,9 @@ from pydantic import field_validator
 from pydantic.alias_generators import to_camel
 
 from .utils import save_json
+
+logger = logging.getLogger(__name__)
+
 
 URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp"
 
@@ -215,23 +219,17 @@ def build_params(symbols: str | list[str]) -> dict[str, Any]:
     }
 
 
-def get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
-    resp = httpx.get(URL, params=build_params(symbols))
-    resp.raise_for_status()
-
-    return StockInfoResponse.model_validate(resp.json())
+def get_stock_info_sync(symbols: str | list[str]) -> StockInfoResponse:
+    return asyncio.run(get_stock_info(symbols))
 
 
-async def async_get_stock_info(symbols: str | list[str]) -> StockInfoResponse:
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(URL, params=build_params(symbols))
+async def get_stock_info(symbols: str | list[str], output_json: str | Path | None = None) -> StockInfoResponse:
+    async with httpx.AsyncClient(verify=False) as client:
+        params = build_params(symbols)
+        resp = await client.get(URL, params=params)
         resp.raise_for_status()
 
+        if output_json:
+            save_json(resp.json(), output_json)
+
         return StockInfoResponse.model_validate(resp.json())
-
-
-def save_stock_info(symbols: str | list[str], output_json: str | Path) -> None:
-    resp = httpx.get(URL, params=build_params(symbols))
-    resp.raise_for_status()
-
-    save_json(resp.json(), output_json)

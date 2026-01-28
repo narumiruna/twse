@@ -5,7 +5,7 @@ import pytest
 import respx
 
 from twse.stock_info import URL
-from twse.stock_info import get_stock_info
+from twse.stock_info import get_stock_info_sync
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ def test_get_stock_info(symbols, testdata) -> None:
 
     with respx.mock as mock:
         mock_route = mock.get(URL).mock(return_value=httpx.Response(200, json=mock_response))
-        resp = get_stock_info(symbols)
+        resp = get_stock_info_sync(symbols)
 
         assert mock_route.called
 
@@ -33,7 +33,7 @@ def test_get_stock_info(symbols, testdata) -> None:
 def test_query_stock_info_input_validation():
     """Test input validation for stock codes."""
     with pytest.raises(ValueError):
-        get_stock_info("")  # Empty string
+        get_stock_info_sync("")  # Empty string
 
     with pytest.raises(ValueError):
-        get_stock_info([])  # Empty list
+        get_stock_info_sync([])  # Empty list

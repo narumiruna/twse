@@ -1,9 +1,10 @@
-from twse import get_stock_info
+from twse import get_stock_info_sync
 
 
 def main() -> None:
-    result = get_stock_info("2330")
+    result = get_stock_info_sync("2330")
     print(result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

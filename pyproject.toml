@@ -7,7 +7,6 @@ requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 dependencies    = [
   "httpx>=0.28.1",
-  "loguru>=0.7.3",
   "pydantic>=2.12.5",
 ]
 
