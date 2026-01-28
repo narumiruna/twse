@@ -114,12 +114,14 @@ class StockInfo(BaseModel):
 
         if len(asks) == 0 and len(bids) == 0:
             return 0.0
-        elif len(asks) == 0:
+        if len(asks) == 0:
             return max(bids)
-        elif len(bids) == 0:
+        if len(bids) == 0:
             return min(asks)
-        else:
-            return (max(bids) + min(asks)) / 2.0
+        return (max(bids) + min(asks)) / 2.0
+
+    def exists(self) -> bool:
+        return bool(self.symbol) and bool(self.name)
 
     def pretty_repr(self) -> str:
         if not self.symbol:
@@ -190,12 +192,7 @@ class StockInfoResponse(BaseModel):
         if not self.msg_array:
             return "*No stock information available*"
 
-        result = []
-        for stock in self.msg_array:
-            if stock_info := stock.pretty_repr():
-                result.append(stock_info)
-
-        return "\n\n".join(result)
+        return "\n\n".join([stock.pretty_repr() for stock in self.msg_array if stock.exists()])
 
 
 def build_ex_ch(symbols: list[str]) -> str:

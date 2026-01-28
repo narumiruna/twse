@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -17,7 +18,7 @@ from twse.stock_info import get_stock_info_sync
     ],
 )
 def test_get_stock_info(symbols, testdata) -> None:
-    with open(testdata) as file:
+    with Path(testdata).open("r") as file:
         mock_response = json.load(file)
 
     with respx.mock as mock:
