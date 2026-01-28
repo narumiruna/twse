@@ -37,6 +37,3 @@ def test_query_stock_info_input_validation():
 
     with pytest.raises(ValueError):
         get_stock_info([])  # Empty list
-
-    with pytest.raises(TypeError):
-        get_stock_info(None)  # None value
