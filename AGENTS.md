@@ -5,6 +5,7 @@
 - `tests/` holds pytest suites (e.g., `tests/test_stock_info.py`) and fixtures under `tests/testdata/`.
 - `example.py` provides a runnable usage example.
 - `pyproject.toml` defines dependencies, tooling, and lint/type settings.
+ - Public API entry points: `get_stock_info_sync` (sync) and `get_stock_info` (async).
 
 ## Build, Test, and Development Commands
 Use `uv`-backed Make targets to ensure consistent environments:

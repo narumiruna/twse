@@ -26,15 +26,33 @@ pip install twse
 ### Basic Usage
 
 ```python
-from twse.stock_info import query_stock_info
+from twse import get_stock_info_sync
 
 # Query single stock (TSMC - 2330)
-response = query_stock_info("2330")
+response = get_stock_info_sync("2330")
 print(response.pretty_repr())
 
 # Query multiple stocks (TSMC - 2330 and Hon Hai - 2317)
-response = query_stock_info(["2330", "2317"])
+response = get_stock_info_sync(["2330", "2317"])
 print(response.pretty_repr())
+```
+
+### Async Usage
+
+```python
+import asyncio
+
+from twse import get_stock_info
+
+
+async def main() -> None:
+    # Query single stock (TSMC - 2330)
+    response = await get_stock_info("2330")
+    print(response.pretty_repr())
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### Example Output
