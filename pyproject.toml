@@ -13,11 +13,13 @@ dependencies    = [
 [dependency-groups]
 dev = [
   "pip>=25.3",
+  "prek>=0.3.0",
   "pytest>=9.0.2",
   "pytest-cov>=7.0.0",
   "respx>=0.22.0",
   "rich>=14.3.1",
   "ruff>=0.14.14",
+  "tombi>=0.7.25",
   "ty>=0.0.14",
 ]
 
